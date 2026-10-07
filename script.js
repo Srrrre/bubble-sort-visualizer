@@ -267,6 +267,10 @@ function initVisualizer() {
     ui.speed.setAttribute("aria-valuetext", ui.speedOutput.textContent);
     // 当前等待保持不变，下一个步骤安排定时器时读取新速度。
   });
+  // 切换学习模块时，取消隐藏页面中的未完成排序，避免后台继续播放。
+  window.addEventListener("learning:view-change", (event) => {
+    if (event.detail !== "bubble" && isBusy()) reset();
+  });
   reset();
 }
 

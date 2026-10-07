@@ -3,14 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="用柱状图逐步理解冒泡排序：观察相邻比较、交换，以及每一轮确定的最终位置。支持离线使用。">
+  <meta name="description" content="算法与数据结构实验室：逐步观察冒泡排序和单链表的遍历、查找、插入、删除与三指针反转。支持离线使用。">
   <title>冒泡排序可视化 · 算法实验室</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Cpath d='M8 23V17M16 23V12M24 23V7' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./linked-list.css">
   <script src="./script.js" defer></script>
+  <script src="./linked-list-core.js" defer></script>
+  <script src="./linked-list.js" defer></script>
 </head>
 <body>
   <main class="page">
+    <nav class="module-nav" aria-label="学习模块">
+      <button id="nav-bubble" type="button" aria-pressed="true" aria-controls="bubble-view"><small>排序算法</small><span>▂▅▇ 冒泡排序</span></button>
+      <button id="nav-list" type="button" aria-pressed="false" aria-controls="linked-list-view"><small>数据结构</small><span>▣ → ▣ 单链表</span></button>
+    </nav>
+    <section id="bubble-view" aria-label="冒泡排序模块">
     <header class="page-header">
       <div>
         <p class="eyebrow"><span class="brand-mark" aria-hidden="true">▂▅▇</span> 算法实验室 <span class="chapter">/ 01</span></p>
@@ -108,7 +116,90 @@
 }</code></pre>
       </div>
     </section>
-    <footer class="page-footer"><span>BUBBLE SORT VISUALIZER</span><span>看见过程，理解算法。</span></footer>
+    </section>
+
+    <section id="linked-list-view" aria-labelledby="list-title" hidden>
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">算法实验室 <span class="chapter">/ 02 · 无哨兵单链表</span></p>
+          <h1 id="list-title">单链表<span class="title-accent">，看清每一次连接。</span></h1>
+          <p class="intro">节点不动，先看指针怎么变。一步一步理解插入、删除和反转。</p>
+        </div>
+        <span class="offline-badge">● 节点 ID 稳定 · 位置从 1 开始</span>
+      </header>
+
+      <section class="panel controls" aria-labelledby="list-controls-title">
+        <h2 class="section-title" id="list-controls-title"><span class="section-number">01</span> 创建链表</h2>
+        <form id="ll-create-form" novalidate>
+          <label for="ll-input">节点值</label>
+          <div class="input-row">
+            <input id="ll-input" type="text" value="10, 20, 30, 40" aria-describedby="ll-input-hint ll-error" autocomplete="off" spellcheck="false">
+            <button id="ll-create" type="submit" class="button secondary">创建链表</button>
+            <button id="ll-random" type="button" class="button secondary">↻ 随机生成</button>
+            <button id="ll-clear" type="button" class="button quiet">清空链表</button>
+          </div>
+          <p id="ll-input-hint" class="hint">1～12 个整数，值为 -99～99；支持中英文逗号和空格。空链表请用“清空链表”。</p>
+        </form>
+        <div class="ll-operation-row">
+          <div class="ll-select-field"><label for="ll-operation">选择操作</label><select id="ll-operation"><option value="traverse">遍历链表</option><option value="search">按值查找</option><option value="insert">按位置插入</option><option value="delete">按位置删除</option><option value="reverse">迭代反转</option></select></div>
+          <div id="ll-position-field" hidden><label for="ll-position">位置（从 1 开始）</label><input id="ll-position" type="text" inputmode="numeric" value="2" aria-describedby="ll-operation-hint ll-error"></div>
+          <div id="ll-value-field" hidden><label id="ll-value-label" for="ll-value">节点值</label><input id="ll-value" type="text" inputmode="text" value="15" aria-describedby="ll-error"></div>
+          <p id="ll-operation-hint" class="hint">p 从 head 出发，沿 next 访问每一个节点。</p>
+        </div>
+        <p id="ll-error" class="input-error" role="alert" hidden></p>
+        <div class="playback-row ll-playback-row">
+          <div class="button-group">
+            <button id="ll-start" class="button primary" type="button">▶ 开始演示</button>
+            <button id="ll-pause" class="button secondary" type="button" disabled>Ⅱ 暂停</button>
+            <button id="ll-step" class="button secondary" type="button">▷ 下一步</button>
+            <button id="ll-reset" class="button quiet" type="button">↺ 重置本次操作</button>
+          </div>
+          <div class="speed-control">
+            <div class="speed-heading"><label for="ll-speed">播放速度</label><output id="ll-speed-output" for="ll-speed">每步 800 毫秒</output></div>
+            <div class="range-row"><span>慢</span><input id="ll-speed" type="range" min="0" max="1400" step="50" value="700" aria-valuetext="每步 800 毫秒"><span>快</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel ll-visualization" aria-labelledby="ll-canvas-title">
+        <div class="section-heading">
+          <h2 id="ll-canvas-title" class="section-title"><span class="section-number">02</span> 指针与节点</h2>
+          <div class="chart-meta"><span><span id="ll-length-label">长度</span> <strong id="ll-length">4</strong></span><span id="ll-status" class="status" data-status="idle" role="status">待开始</span></div>
+        </div>
+        <div id="ll-pointers" class="ll-pointers" aria-label="指针变量当前值"></div>
+        <div id="ll-scroll" class="ll-scroll" tabindex="0" role="region" aria-label="单链表关系图，可横向滚动查看全部节点">
+          <div id="ll-canvas" class="ll-canvas" aria-label="节点和 next 引用关系"></div>
+        </div>
+        <div class="ll-graph-caption"><span id="ll-sequence">head → 10 → 20 → 30 → 40 → nullptr</span><span id="ll-layout-hint">横向排列方便阅读，不代表节点在内存中连续存储。</span></div>
+        <ul class="ll-legend" aria-label="节点状态图例">
+          <li><i class="ll-key current" aria-hidden="true">●</i> 当前处理</li><li><i class="ll-key previous" aria-hidden="true">P</i> prev 指针</li><li><i class="ll-key new" aria-hidden="true">＋</i> 待插入</li><li><i class="ll-key target" aria-hidden="true">−</i> 待删除</li><li><i class="ll-key visited" aria-hidden="true">✓</i> 已访问 / 已反转</li>
+        </ul>
+      </section>
+
+      <section class="ll-teaching-grid" aria-label="教学步骤与参考代码">
+        <div class="ll-notes">
+          <div class="step-card ll-step-card">
+            <div class="ll-step-heading"><p class="eyebrow">当前步骤</p><span>第 <b id="ll-step-count">0</b> 步</span></div>
+            <p id="ll-description" role="status" aria-live="polite" aria-atomic="true">选择一个操作。可以自动播放，也可以用“下一步”慢慢观察指针。</p>
+            <p id="ll-visited" class="ll-visited">已访问：—</p>
+          </div>
+          <div class="ll-principles">
+            <h2>先保留去路，再改变连接。</h2>
+            <p id="ll-principle">指针保存的是节点的引用。沿 next 移动指针，不会移动或复制节点本身。</p>
+            <p id="ll-complexity" class="hint"></p>
+            <details class="ll-definition"><summary>Node 节点定义与图示约定</summary><pre><code>struct Node {
+    int val;
+    Node* next;
+};</code></pre><p>N1、N2 是可视化使用的唯一编号，不是真实内存地址，也不是位置序号。head 是指针，不是额外的节点。相同值也可以属于不同节点。</p><p>“释放节点”仅模拟 C++ 的 delete；JavaScript 的真实内存由垃圾回收器管理。</p></details>
+          </div>
+        </div>
+        <div class="code-panel ll-code-panel">
+          <div class="code-heading"><span><span class="code-dot" aria-hidden="true"></span><span id="ll-code-title">C++ · 遍历链表</span></span><span>高亮行 = 当前步骤</span></div>
+          <pre id="ll-code-scroll" tabindex="0" aria-label="单链表 C++ 参考代码，当前执行行高亮"><code id="ll-code"></code></pre>
+        </div>
+      </section>
+    </section>
+    <footer class="page-footer"><span>ALGORITHM & DATA STRUCTURE LAB</span><span>看见过程，理解算法。</span></footer>
     <noscript><p class="input-error">请在浏览器中启用 JavaScript，才能使用排序可视化。</p></noscript>
   </main>
 </body>
