@@ -1,0 +1,17 @@
+# 此项目运行时没有依赖或构建产物。
+node_modules/
+__pycache__/
+*.pyc
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+test-results/
+playwright-report/
