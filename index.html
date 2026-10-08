@@ -3,20 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="算法与数据结构实验室：逐步观察冒泡排序和单链表的遍历、查找、插入、删除与三指针反转。支持离线使用。">
+  <meta name="description" content="算法与数据结构实验室：逐步观察冒泡排序、单链表指针操作与二叉树遍历的递归调用栈、BFS 队列。支持离线使用。">
   <title>冒泡排序可视化 · 算法实验室</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Cpath d='M8 23V17M16 23V12M24 23V7' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="./linked-list.css">
+  <link rel="stylesheet" href="./binary-tree.css">
   <script src="./script.js" defer></script>
   <script src="./linked-list-core.js" defer></script>
   <script src="./linked-list.js" defer></script>
+  <script src="./binary-tree-core.js" defer></script>
+  <script src="./binary-tree.js" defer></script>
+  <script src="./navigation.js" defer></script>
 </head>
 <body>
   <main class="page">
     <nav class="module-nav" aria-label="学习模块">
       <button id="nav-bubble" type="button" aria-pressed="true" aria-controls="bubble-view"><small>排序算法</small><span>▂▅▇ 冒泡排序</span></button>
       <button id="nav-list" type="button" aria-pressed="false" aria-controls="linked-list-view"><small>数据结构</small><span>▣ → ▣ 单链表</span></button>
+      <button id="nav-tree" type="button" aria-pressed="false" aria-controls="binary-tree-view"><small>数据结构</small><span>⑂ 二叉树</span></button>
     </nav>
     <section id="bubble-view" aria-label="冒泡排序模块">
     <header class="page-header">
@@ -196,6 +201,111 @@
         <div class="code-panel ll-code-panel">
           <div class="code-heading"><span><span class="code-dot" aria-hidden="true"></span><span id="ll-code-title">C++ · 遍历链表</span></span><span>高亮行 = 当前步骤</span></div>
           <pre id="ll-code-scroll" tabindex="0" aria-label="单链表 C++ 参考代码，当前执行行高亮"><code id="ll-code"></code></pre>
+        </div>
+      </section>
+    </section>
+    <section id="binary-tree-view" aria-labelledby="tree-title" hidden>
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">算法实验室 <span class="chapter">/ 03 · 二叉树遍历</span></p>
+          <h1 id="tree-title">二叉树<span class="title-accent">，跟着函数走一遍。</span></h1>
+          <p class="intro">进入函数不等于访问节点。让调用栈和队列，讲清每一步从哪里来、往哪里去。</p>
+        </div>
+        <span class="offline-badge">● 四种遍历 · 逐步理解递归</span>
+      </header>
+
+      <section class="panel controls" aria-labelledby="bt-controls-title">
+        <h2 id="bt-controls-title" class="section-title"><span class="section-number">01</span> 创建与播放</h2>
+        <form id="bt-create-form" novalidate>
+          <label for="bt-input">层序序列</label>
+          <div class="input-row">
+            <input id="bt-input" type="text" value="[1,2,3,4,5,null,6]" aria-describedby="bt-input-hint bt-error" autocomplete="off" spellcheck="false">
+            <button id="bt-create" class="button secondary" type="submit">创建二叉树</button>
+            <button id="bt-default" class="button quiet" type="button">恢复默认二叉树</button>
+          </div>
+          <p id="bt-input-hint" class="hint">用英文方括号和逗号；null 表示空孩子，[] 表示空树。最多 15 个节点，值为 -99～99 的整数。</p>
+          <p id="bt-error" class="input-error" role="alert" hidden></p>
+        </form>
+        <div class="bt-operation-row">
+          <div><label for="bt-operation">选择遍历方式</label><select id="bt-operation"><option value="preorder">前序遍历 · Preorder</option><option value="inorder">中序遍历 · Inorder</option><option value="postorder">后序遍历 · Postorder</option><option value="levelorder">层序遍历 · Level Order</option></select></div>
+          <p id="bt-order-hint" class="hint">根 → 左 → 右：先访问自己，再递归处理孩子。</p>
+        </div>
+        <div class="playback-row bt-playback-row">
+          <div class="button-group">
+            <button id="bt-start" class="button primary" type="button">▶ 开始演示</button>
+            <button id="bt-pause" class="button secondary" type="button" disabled>Ⅱ 暂停</button>
+            <button id="bt-step" class="button secondary" type="button">▷ 下一步</button>
+            <button id="bt-reset" class="button quiet" type="button">↺ 重置</button>
+          </div>
+          <div class="speed-control">
+            <div class="speed-heading"><label for="bt-speed">播放速度</label><output id="bt-speed-output" for="bt-speed">每步 800 毫秒</output></div>
+            <div class="range-row"><span>慢</span><input id="bt-speed" type="range" min="0" max="1400" step="50" value="700" aria-valuetext="每步 800 毫秒"><span>快</span></div>
+          </div>
+        </div>
+        <p class="hint">建议先选中序，再用「下一步」观察：父函数等待左子树返回后，才执行 visit(root)。切换遍历方式会清空当前进度。</p>
+      </section>
+
+      <div class="bt-workspace">
+        <section class="panel bt-visualization" aria-labelledby="bt-canvas-title">
+          <div class="section-heading">
+            <h2 id="bt-canvas-title" class="section-title"><span class="section-number">02</span> 树与执行路径</h2>
+            <span id="bt-status" class="status" data-status="idle" role="status">待开始</span>
+          </div>
+          <div class="bt-metadata"><span>节点 <b id="bt-count">6</b></span><span>最大深度 <b id="bt-tree-depth">3</b></span><span>根为第 1 层 · 空树深度为 0</span></div>
+          <div id="bt-scroll" class="bt-scroll" tabindex="0" role="region" aria-label="二叉树图形，较宽或较深时可在区域内滚动">
+            <svg id="bt-canvas" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="二叉树及当前执行路径"></svg>
+          </div>
+          <p id="bt-path" class="bt-path">调用路径：—</p>
+          <ul class="bt-legend" aria-label="二叉树节点状态图例">
+            <li><i class="bt-key" aria-hidden="true">·</i> 待处理</li><li><i class="bt-key current" aria-hidden="true">▶</i> 当前函数 / 处理</li><li><i class="bt-key path" aria-hidden="true">┆</i> 递归路径</li><li><i class="bt-key visited" aria-hidden="true">✓</i> 已访问</li><li><i class="bt-key completed" aria-hidden="true">✓✓</i> 已完成</li>
+          </ul>
+        </section>
+
+        <section class="panel bt-memory" aria-labelledby="bt-memory-title">
+          <h2 id="bt-memory-title" class="section-title">递归调用栈</h2>
+          <p id="bt-memory-hint" class="hint">栈顶在上方。高亮帧是当前执行的函数，其余帧正在等待子调用。</p>
+          <div id="bt-stack" class="bt-stack" aria-label="递归调用栈，栈顶在前"></div>
+          <div id="bt-queue-panel" hidden>
+            <p class="bt-queue-direction">← 出队 · 队头在左，队尾在右 · 从右侧入队</p>
+            <div id="bt-queue" class="bt-queue" tabindex="0" role="region" aria-label="BFS 队列，队头在左，队尾在右"></div>
+          </div>
+          <dl class="bt-execution-stats">
+            <div><dt>当前遍历</dt><dd id="bt-current-operation">前序遍历</dd></div>
+            <div><dt>当前节点</dt><dd id="bt-current">—</dd></div>
+            <div id="bt-depth-stat"><dt>递归深度（栈帧数）</dt><dd id="bt-recursion-depth">0</dd></div>
+            <div id="bt-level-stat" hidden><dt>当前层数</dt><dd id="bt-level">—</dd></div>
+          </dl>
+          <p id="bt-depth-note" class="hint">深度包含短暂的 nullptr 调用帧，因此可能比树的最大深度多 1。栈空时为 0。</p>
+        </section>
+      </div>
+
+      <section class="bt-teaching-grid" aria-label="当前步骤与同步代码">
+        <div>
+          <div class="step-card bt-step-card">
+            <div class="ll-step-heading"><p class="eyebrow">当前步骤</p><span>第 <b id="bt-step-count">0</b> 步</span></div>
+            <p id="bt-description" role="status" aria-live="polite" aria-atomic="true">点击「下一步」，先观察函数进入，再观察访问发生的时机。</p>
+            <p class="bt-current-code-label">当前执行代码</p><code id="bt-current-code">—</code>
+          </div>
+          <section class="panel bt-result-panel" aria-labelledby="bt-result-title"><h2 id="bt-result-title">已访问节点 <small id="bt-result-hint">只有 visit(root) 才加入结果</small></h2><div id="bt-result" class="bt-result" aria-label="遍历结果"></div></section>
+          <div class="bt-principles">
+            <h2>一层函数，只管自己的下一行。</h2>
+            <p id="bt-principle"></p><p id="bt-complexity" class="hint"></p>
+            <p class="hint">n 为节点数，h 为树高，w 为最大层宽。复杂度指遍历本身；网页另用 O(n) 空间保存当前快照、访问记录和图形，不保存全部步骤历史。每步复制和绘图也有额外开销。</p>
+          </div>
+        </div>
+        <div>
+          <div class="code-panel">
+            <div class="code-heading"><span><span class="code-dot" aria-hidden="true"></span><span id="bt-code-title">C++ · 前序遍历</span></span><span>高亮行 = 当前步骤</span></div>
+            <pre id="bt-code-scroll" tabindex="0" aria-label="二叉树遍历 C++ 参考代码，当前行高亮"><code id="bt-code"></code></pre>
+          </div>
+          <details class="ll-definition bt-definition"><summary>TreeNode、visit 与空指针约定</summary><pre><code>struct TreeNode {
+    int val;
+    TreeNode* left;
+    TreeNode* right;
+};
+void visit(TreeNode* root) {
+    std::cout &lt;&lt; root-&gt;val &lt;&lt; ' ';
+}</code></pre><p>代码为教学函数片段。完整程序还需 &lt;iostream&gt;；层序遍历需 &lt;queue&gt; 和 using std::queue。T1、T2 是节点唯一编号，不是真实内存地址。空孩子不会计为树节点，但也会触发一次递归调用和终止判断。</p><p>“已访问”表示已经输出数值；“已完成”表示该节点的函数即将返回（层序遍历中表示孩子已处理完）。返回后，父帧高亮刚完成的调用语句；再点下一步才继续后续语句。</p></details>
         </div>
       </section>
     </section>

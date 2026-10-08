@@ -253,7 +253,7 @@ test("real timers and WAAPI: pause freezes an in-flight swap, then resumes", asy
 test("keyboard focus is visible and Enter applies a valid array", async () => {
   const page = await openPage();
   // 新增模块导航后，Tab 先经过两个导航按钮，再进入原有数组输入框。
-  for (const selector of ["#nav-bubble", "#nav-list"]) {
+  for (const selector of ["#nav-bubble", "#nav-list", "#nav-tree"]) {
     await page.keyboard.press("Tab");
     assert.equal(await page.locator(selector).evaluate((element) => element === document.activeElement && element.matches(":focus-visible")), true);
   }

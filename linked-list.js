@@ -1,6 +1,6 @@
 "use strict";
 
-// 算法在 linked-list-core.js；本文件只负责导航、播放状态与关系图。
+// 算法在 linked-list-core.js；本文件只负责播放状态与关系图。
 (() => {
   const core = globalThis.LinkedListCore;
   const get = (id) => document.getElementById(id);
@@ -13,7 +13,7 @@
   const state = {
     model: core.createList([10, 20, 30, 40]), before: null, iterator: null,
     status: "idle", operation: "traverse", timer: null, runId: 0,
-    count: 0, frame: null, layout: [], detached: null, activeView: null
+    count: 0, frame: null, layout: [], detached: null
   };
   const busy = () => state.status === "running" || state.status === "paused";
   const delay = () => 1500 - Number(ui.speed.value);
@@ -378,24 +378,11 @@
     resetOperation();
   });
 
-  // 使用同页模块切换，完成后的链表保留；未完成操作先回滚快照再隐藏。
-  function switchView(view, updateHash = false) {
-    if (view === state.activeView) return;
-    if (view !== "list" && busy()) resetOperation();
-    window.dispatchEvent(new CustomEvent("learning:view-change", { detail: view }));
-    state.activeView = view;
-    get("bubble-view").hidden = view !== "bubble";
-    get("linked-list-view").hidden = view !== "list";
-    get("nav-bubble").setAttribute("aria-pressed", String(view === "bubble"));
-    get("nav-list").setAttribute("aria-pressed", String(view === "list"));
-    document.title = view === "list" ? "单链表可视化 · 算法实验室" : "冒泡排序可视化 · 算法实验室";
-    if (updateHash) location.hash = view === "list" ? "linked-list" : "bubble-sort";
-  }
-  get("nav-bubble").addEventListener("click", () => switchView("bubble", true));
-  get("nav-list").addEventListener("click", () => switchView("list", true));
-  window.addEventListener("hashchange", () => switchView(location.hash === "#linked-list" ? "list" : "bubble"));
+  // 完成后的链表保留；未完成操作先回滚快照再隐藏。
+  window.addEventListener("learning:view-change", (event) => {
+    if (event.detail !== "list" && busy()) resetOperation();
+  });
   window.addEventListener("pagehide", () => { if (busy()) resetOperation(); });
   showCode();
   resetOperation();
-  switchView(location.hash === "#linked-list" ? "list" : "bubble");
 })();
